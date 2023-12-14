@@ -14,10 +14,11 @@ WORKDIR /CSAPP-projects
 
 
 # 运行这个docker，只需要执行如下命令：
-#docker build -t csapp .
-#docker run -v C:/users/kevin/projects/cs61c:/cs61c -it csapp
+#docker build -t projects .
+#docker run -v C:/users/kevin/projects:/projects -it projects
 
-# apt-get update && apt-get install libcunit1 libcunit1-doc libcunit1-dev python3-dev  
+# apt-get update
+# apt-get install libcunit1 libcunit1-doc libcunit1-dev python3-dev  
 
 
 

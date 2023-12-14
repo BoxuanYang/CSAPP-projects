@@ -1,0 +1,94 @@
+
+
+strings_not_equal: 0000000000401338
+Given the input: rdi & rsi, which are pointers to my input string and password string, 
+respectively, tests whether the input string is identical to the password.
+The result of comparison looks to be stored in eax.
+
+rbx, rbp: pointer to my input string and password string, respectively
+
+逻辑应该是这样的：
+i = 0;
+while(i < len){
+  if(input[i] != password[i]){
+    return;
+  }
+
+  i++;
+}
+
+
+if(len(my_string) != len(password)):{
+  eax = edx
+  pop, pop, pop
+  return
+}
+  
+
+
+
+phase_1: 0000000000400ee0
+  rsp = rsp - 8;
+  esi = 0x402400;
+  strings_not_equal();
+  if(eax == 0){
+    rsp += 8;
+    return;
+  }
+  else{
+    explode_bomb();
+    rsp += 8;
+    return;
+  }
+
+
+
+string_length: 000000000040131b
+
+Given the input pointer stored at rdi, compute the length of the string. 
+Store length of input string to rax & rcx register.
+
+if(*rdi == '\0'):
+  eax = 0
+  return
+
+rdx = rdi
+rdx++
+eax = edx
+eax = eax - edi
+if(rdx != 0):
+  go to rdx++
+else:
+  eax = 0
+  return
+
+
+52:
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+
+
+
+
+
+
+Workflow:
+gdb bomb
+b explode_bomb
+b phase_1
+
+r
+
+GDB reference:
+删除所有断点：delete breakpoints
+打印存储的数值：x/g $rax
+查看断点：info breakpoints
+al是ax的lower 8 bits
+ax是eax的lower 16 bits
+eax是rax的lower 32 bits
+disass # Display some assembly code next
+stepi # next assembly instruction
+info registers # print all registers
+p $reg_name # print one register, e.g., p $rdi
+x/i $pc # show current instruction
+print /t $rax Print contents of %rax in binary
