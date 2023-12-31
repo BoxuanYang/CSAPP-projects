@@ -43,6 +43,20 @@ phase_1: 0000000000400ee0
 
 
 
+phase_2: 0000000000400efc
+Given the input $rax, which stores a pointer to my input string. 
+Determin whether the inpupt matches with password.
+
+read_six_numbers: 000000000040145c
+Input:
+rax: pointer to my input string, = 0x6037d0(initial), # numbers read(end)
+rsi: 0x7fffffffdba0，一定代表某种含义
+rsp: 0x7fffffffdb98，一定代表某种含义(初始值)，0x7fffffffdb98，一定代表某种含义（末端值）
+
+Output: rsp = input[0], rsp+4 = input[1]...
+
+
+
 string_length: 000000000040131b
 
 Given the input pointer stored at rdi, compute the length of the string. 
@@ -80,6 +94,10 @@ b phase_1
 r
 
 GDB reference:
+printf "%c\n", $eax
+打印寄存器的值（Hex）：p/x $rdx
+打印字符串： x/s 0xbffff890
+打印字符：x/c $rsp
 删除所有断点：delete breakpoints
 打印存储的数值：x/g $rax
 查看断点：info breakpoints
@@ -90,5 +108,5 @@ disass # Display some assembly code next
 stepi # next assembly instruction
 info registers # print all registers
 p $reg_name # print one register, e.g., p $rdi
-x/i $pc # show current instruction
+显示现在的指令：x/i $pc
 print /t $rax Print contents of %rax in binary

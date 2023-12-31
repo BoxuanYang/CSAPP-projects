@@ -75,15 +75,7 @@ int main(){
 
     
     
-    converter.f = -2147528192.0000;
-    int y = floatFloat2Int(converter.u);
-    int expected = (int) converter.f;
-
-    printf("Input: %f, Output: %d, Expected: %d \n", converter.f, y, expected);
-
-    int max_int = 1<<31-1;
-    int min_int = 1<<31;
-    printf("Max int: %d, Min int: %d", max_int, min_int);
+    printf("Hello worzld\n");
 
   
     return 0;
