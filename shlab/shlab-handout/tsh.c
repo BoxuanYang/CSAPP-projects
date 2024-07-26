@@ -176,11 +176,12 @@ void eval(char *cmdline)
 
     if(is_builtin != 1){ // if the command is not built-in
         if((pid = fork()) == 0){ // child process
-            int pgid = setpgid(0, 0);
+            setpgid(0, 0);
             if(execve(argv[0], argv, environ) < 0){
                 printf("%s: Command not found.\n", argv[0]);
                 exit(0);
             }
+            exit(0);
         }
 
         // parent process
