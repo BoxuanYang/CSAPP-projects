@@ -422,7 +422,7 @@ void sigint_handler(int sig)
     int jid = pid2jid(pid);
 
     if(pid != 0){
-        kill(pid, SIGINT);
+        kill(-pid, SIGINT);
         printf("Job [%d] (%d) terminated by signal %d\n", jid, pid, sig);
     }
     sigprocmask(SIG_SETMASK, &prev, NULL);
