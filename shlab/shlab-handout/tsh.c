@@ -301,6 +301,9 @@ void do_bgfg(char **argv)
     // TODO -- DONE
 
     int jid = atoi(argv[1] + 1);
+
+    
+
     //printf("JID: %d\n", jid);
 
     // get the job based on jid
@@ -381,12 +384,18 @@ void sigchld_handler(int sig)
         if(WIFSTOPPED(status)){
             //printf("child process stopped\n");
             struct job_t *job = getjobpid(jobs, pid);
+            int sig = WSTOPSIG(status);
+            int jid = pid2jid(pid);
             job->state = ST;
+            printf("Job [%d] (%d) stopped by signal %d\n", jid, pid, sig);
             return;
         }
 
         if(WIFSIGNALED(status)){
             //printf("child terminated due to signal\n");
+            int sig = WTERMSIG(status);
+            int jid = pid2jid(pid);
+            printf("Job [%d] (%d) terminated by signal %d\n", jid, pid, sig);
             deletejob(jobs, pid);
             return;
         }
