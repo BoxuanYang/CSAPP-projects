@@ -1,0 +1,3 @@
+1. SIGINT  kernel -> shell
+2. SIGINT  shell -> foregroundjob
+3. SIGCHLD foregroundjob -> shell
