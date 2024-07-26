@@ -313,7 +313,7 @@ void do_bgfg(char **argv)
         // run bg command: Change a stopped background job to a running background job
         if (strcmp(argv[0], "bg") == 0){
             // TODO -- DONE
-            kill(pid, SIGCONT);
+            kill(-pid, SIGCONT);
             job->state = BG;
             printf("[%d] (%d) %s", jid, pid, job->cmdline);
             return;
@@ -322,7 +322,7 @@ void do_bgfg(char **argv)
         // run fg command: Change a stopped or running background job to run in the foreground
         if (strcmp(argv[0], "fg") == 0){
             // TODO -- DONE
-            kill(pid, SIGCONT);
+            kill(-pid, SIGCONT);
             job->state = FG;
             waitfg(pid);
             return;
