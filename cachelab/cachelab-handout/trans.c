@@ -20,14 +20,38 @@ int is_transpose(int M, int N, int A[N][M], int B[M][N]);
  *     be graded. 
  */
 char transpose_submit_desc[] = "Transpose submission";
-void transpose_submit(int M, int N, int A[N][M], int B[M][N])
-{
+void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
     // TODO
-    for(int i = 0; i < M; i++){
-        for(int j = 0; j < N; j++){
-            B[j][i] = A[i][j];
+    int b = 8;
+
+    
+    for(int i = 0; i < M; i += b){ // row block
+        for(int j = 0; j < N; j += b){ // col block
+            for(int ii = 0; ii < b; ii++){ // row offset within block
+                    
+                    int a = A[i + ii][j + 0];
+                    int b = A[i + ii][j + 1];
+                    int c = A[i + ii][j + 2];
+                    int d = A[i + ii][j + 3];
+                    int e = A[i + ii][j + 4];
+                    int f = A[i + ii][j + 5];
+                    int g = A[i + ii][j + 6];
+                    int h = A[i + ii][j + 7];
+
+                    B[j + 0][i + ii] = a;
+                    B[j + 1][i + ii] = b;
+                    B[j + 2][i + ii] = c;
+                    B[j + 3][i + ii] = d;
+                    B[j + 4][i + ii] = e;
+                    B[j + 5][i + ii] = f;
+                    B[j + 6][i + ii] = g;
+                    B[j + 7][i + ii] = h;
+            }
         }
-    }
+    } 
+
+     
+
     return;
 }
 

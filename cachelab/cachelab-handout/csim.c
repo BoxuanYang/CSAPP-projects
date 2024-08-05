@@ -188,11 +188,6 @@ int cache_access(unsigned long address, int bytes, int verbose, int l){
 }
 
 
-
-
-
-
-
 /*
 M operation, modify some bytes in address, i.e., 
 a load followed by a store. M = L S
