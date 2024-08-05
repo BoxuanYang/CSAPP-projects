@@ -3,21 +3,25 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <time.h>
+#include <limits.h>
 
 //--------------------------------Global variables starts---------------------------------
 int verbose = 0;
-int s = -1;
-int E = -1;
-int b = -1;
+int s = -1; // Number of set index bits
+int E = -1; // Associativity (number of lines per set
+int b = -1; // Number of block bits (B = 2^b is the block size)
 char *tracefile = NULL;
 
 int hits = 0;
 int misses = 0;
 int evictions = 0;
 
+int my_clock = 0;
+
 typedef struct {
     int valid; // 1 valid bit per line
-    int tag; // 64 - s - b tag bits per line
+    unsigned long tag; // 64 - s - b tag bits per line
     int time_stamp; // the last time this cache line was used
 } cache_line;
 
@@ -67,7 +71,7 @@ void initialize_cache(){
         // set the valid bit, tag bits and data in each cache line to 0
         for(int j = 0; j < E; j++){
             cache[i][j].valid = 0;
-            cache[i][j].tag = 0;
+            cache[i][j].tag = -1;
             cache[i][j].time_stamp = 0;
         }
     }
@@ -75,33 +79,149 @@ void initialize_cache(){
 }
 
 /*
-L operation, read some bytes from address.
+cache access operation(L or S), access some bytes from address.
 
-Return 1 if cache hit, 0 if cache miss.
+Return a 2-bit number where the 0-th bit indicates cache hit/miss
+1st bit represents evictions.
+
+Below are possible return values:
+0: cache miss, no eviction
+1: cache hit,  no eviction
+2: cache miss, eviction
+3: cache hit,  eviction
+
+If cache hit, do hits++, otherwise misses++.
+If eviction, evictions++.
+
+At the end of function, print something based on verbose.
 */
-int L(int address, unsigned long bytes){
+int cache_access(unsigned long address, int bytes, int verbose, int l){
     // TODO
-    return 0;
+    // Compute the set of the address
+    unsigned long set = address >> b & ((1 << s) - 1);
+
+    // Compute the tag
+    unsigned long tag = address >> (b + s);
+
+    // Go to the corresponding cache set
+    cache_line *cache_set = cache[set];
+
+    // Search each line in the set for the data, do below 4 tasks in one search
+    // 1. Whether it has data(hit)
+    // 2. Whether there is a free cache line(has_free_line), if yes, record the index
+    // 3. The index of the valid LRU cache line, i.e., the line with min time stamp(invalid_line_index)
+    int hit = 0; // cache hit or cache miss
+    int has_free_line = 0;
+    int free_line_index = -1;
+
+    int lru_time = INT_MAX; // timestamp of lru cache line
+    int lru_index = -1; // index of the lru cache line
+
+    
+    for(int i = 0; i < E; i++){
+        cache_line line = cache_set[i];
+
+        // cache hit
+        if(line.valid == 1 && line.tag == tag){
+            hit = 1;
+            // update hits
+            hits++;
+            (cache_set + i)->time_stamp = my_clock;
+            break;
+        }
+
+        // search for free line
+        if(has_free_line == 0 && line.valid == 0){
+            free_line_index = i;
+            has_free_line = 1;
+        }
+
+        // search the lru cache line
+        if(line.valid == 1 && line.time_stamp < lru_time){
+            lru_time = line.time_stamp;
+            lru_index = i;
+        }
+    }
+
+    // cache miss
+    int eviction = 0;
+    if(hit == 0){
+        // update misses
+        misses++;
+
+        // if there is free line, perfect, just write to that line!
+        if(has_free_line){
+            cache_set[free_line_index].valid = 1;
+            cache_set[free_line_index].tag = tag;
+            cache_set[free_line_index].time_stamp = my_clock;
+        }
+
+        // if there is no free line, ooops, need to evict a line
+        else{
+            // update evictions
+            evictions++;
+            eviction = 1;
+            
+            cache_set[lru_index].tag = tag;
+            cache_set[lru_index].time_stamp = my_clock;
+        }
+    }
+
+
+    if(verbose){
+        if(l)
+            printf("L %lx,%d", address, bytes);
+        else
+            printf("S %lx,%d", address, bytes);
+
+        if(hit)
+            printf(" hit");
+        else
+            printf(" miss");
+
+        if(eviction)
+            printf(" eviction");
+
+        printf("\n");
+    }
+    return (eviction << 1) | hit;
 }
 
-/*
-M operation, modify some bytes in address
 
-Return 1 if cache hit, 0 if cache miss.
-*/
-int M(int address, unsigned long bytes){
-    // TODO
-    return 0;
-}
+
+
+
+
 
 /*
-S operation, store some bytes to address
+M operation, modify some bytes in address, i.e., 
+a load followed by a store. M = L S
 
-Return 1 if cache hit, 0 if cache miss.
+At the end of function, print something based on verbose.
 */
-int S(int address, unsigned long bytes){
-    // TODO
-    return 0;
+void M(unsigned long address, int bytes, int verbose){
+    int l = cache_access(address, bytes, 0, 1);
+    my_clock++;
+    hits++;
+
+    int l_hit = l & 1;
+    int l_eviction = (l & 2) >> 1;
+
+    if(verbose){
+        printf("M %lx,%d", address, bytes);
+
+        if(l_hit)
+            printf(" hit");
+        else
+            printf(" miss");
+
+        if(l_eviction)
+            printf(" eviction");
+
+        // Second access must be a hit
+        printf(" hit\n");
+    }
+    return;
 }
 
 /*
@@ -120,29 +240,24 @@ void parse_trace(char *filename){
     }
 
     while (fscanf(file, " %c %lx,%d", &operation, &address, &size) > 0){
+        //printf("Operation: %c address: %lx size: %d\n", operation, address, size);
+        my_clock++;
         switch (operation)
         {
         case 'L':
-            if(L(address, size) == 0){
-                misses++; 
-            }else
-                hits++;          
+            //printf("L\n");
+            cache_access(address, size, verbose, 1);
             break;
         case 'M':
-            if(M(address, size) == 0){
-                misses++; 
-            }else
-                hits++;  
+            //printf("M\n");
+            M(address, size, verbose);
             break;
         case 'S':
-            if(S(address, size) == 0){
-                misses++; 
-            }else
-                hits++;  
+            //printf("S\n");
+            cache_access(address, size, verbose, 0);
             break;
         default:
-            printf("Invalid operation!\n");
-            return;
+            continue;
         }
     }
     return;
@@ -151,6 +266,7 @@ void parse_trace(char *filename){
 int main(int argc, char *argv[])
 {
     int opt;
+    // parse the command line argument and set global variables
     while ((opt = getopt(argc, argv, "hvs:E:b:t:")) != -1) {
     switch (opt) {
         case 'h':
